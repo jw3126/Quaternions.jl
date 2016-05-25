@@ -51,3 +51,28 @@ let # test rotations
         end
     end
 end
+
+for _ in 1:100 # test slerp
+    # correctness can be proven if we show
+    # 1) slerp is correct for qa = 1.
+    # 2) slerp is conjugation invariant.
+
+    let # test slerp if q1 = 1
+        q1 = Quaternion(1.,0,0,0)
+        θ_max = rand() * π
+        ax = randn(3)
+        q2 = qrotation(ax, θ_max)
+        t = rand()
+        @test slerp(q1, q2, 0.) ≈ q1
+        @test slerp(q1, q2, 1.) ≈ q2
+        @test norm(slerp(q1, q2, t)) ≈ 1
+        @test slerp(q1, q2, t) ≈ qrotation(ax, t*θ_max)
+    end
+
+    let # test slerp invariant under conjugation action
+        q, q1, q2 = [qrotation(randn(3), rand() * π) for _ in 1:3]
+        ⊗(s, t) = s*t*inv(s)
+        t = rand()
+        @test q ⊗ slerp(q1, q2, t) ≈ slerp(q ⊗ q1, q ⊗ q2, t)
+    end
+end
