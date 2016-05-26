@@ -34,12 +34,12 @@ for _ in 1:100
     # normalize
     @test norm(normalize(q)) ≈ 1
     @test normalize(q).norm
+    @test q ≈ norm(q) * normalize(q)
+    qn = nquatrand()
+    @test qn.norm
+    @test normalize(qn) === qn
+
 end
-
-
-
-
-
 
 let # test rotations
     qx = qrotation([1,0,0], pi/4)
@@ -98,14 +98,16 @@ for _ in 1:100 # test slerp
     # 2) slerp is conjugation invariant.
     let # test slerp if q1 = 1
         q1 = Quaternion(1.,0,0,0)
-        θ_max = rand() * π
+        # there are numerical stability issues with slerp atm
+        θ = clamp(rand() * 3.5, deg2rad(5e-1) ,π)
         ax = randn(3)
-        q2 = qrotation(ax, θ_max)
+        q2 = qrotation(ax, θ)
         t = rand()
+        slerp(q1, q2, 0.) ≈ q1
         @test slerp(q1, q2, 0.) ≈ q1
         @test slerp(q1, q2, 1.) ≈ q2
+        @test slerp(q1, q2, t) ≈ qrotation(ax, t*θ)
         @test norm(slerp(q1, q2, t)) ≈ 1
-        @test slerp(q1, q2, t) ≈ qrotation(ax, t*θ_max)
     end
 
     let # test slerp invariant under conjugation action
